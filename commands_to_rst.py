@@ -79,7 +79,7 @@ This section is auto-generated from the help text for the ${library} command
             output_rst = ""
 
         result = runner.invoke(base_cli, [command, subcommand, "--help"])
-        print(result)
+        print(subcommand, result)
         output = result.output
         lines = output.split("\n")
         new_lines = []

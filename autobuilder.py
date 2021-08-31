@@ -171,9 +171,24 @@ class ScriptBuilder(object):
         ]
         if ptype is not None:
             args.extend(ptype)
-        if helpstr is not None:
-            args.append('help="%s"' % helpstr.replace('"', '\\"'))
-        return f'@click.argument({", ".join(args)})\n'
+
+        # Multiple=True is not permitted for arguments. Because REASONS.
+
+        if 'multiple=True' in args:
+            args[0] = '"--' + args[0][1:]
+            # Also help strings are not supported because they don't agree with
+            # that philosophy and won't support it. (BOO.)
+            #
+            # But at least when it's coerced into a fake required option, we
+            # can add help.
+            #
+            # If you try to make them all arguments it'll error on "didn't you
+            # mean argument??"
+            if helpstr is not None:
+                args.append('help="%s"' % helpstr.replace('"', '\\"'))
+            return f'@click.option({", ".join(args)}, required=True)\n'
+        else:
+            return f'@click.argument({", ".join(args)})\n'
 
     @classmethod
     def __galaxy_argument(cls, name='arg', ptype=None, desc=None):
@@ -456,7 +471,7 @@ class ScriptBuilder(object):
                 if guessed_type is not None:
                     param_type = guessed_type
                 param_docs['return'] = {
-                    'type': param_type.strip(),
+                    'type': param_type,
                     'desc': argdoc[argdoc.index(m.group('ret')) + len(m.group('ret')):].strip(),
                 }
         return param_docs
